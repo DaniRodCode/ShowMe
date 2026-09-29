@@ -71,31 +71,12 @@
       overflow-wrap: anywhere;
     }
 
-    .message {
-      position: absolute;
-      z-index: 2;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      width: min(90vw, 700px);
-      padding: 1.25rem 1.5rem;
-      color: #fff;
-      background: rgba(0, 0, 0, 0.7);
-      border-radius: 12px;
-      text-align: center;
-      font-size: 1.1rem;
-    }
-
-    .hidden {
-      display: none;
-    }
   </style>
 </head>
 <body>
   <main class="viewer">
     <img id="image" alt="">
     <p id="text" class="text"></p>
-    <div id="message" class="message hidden"></div>
   </main>
 
   <script>
@@ -105,28 +86,22 @@
 
     const image = document.getElementById("image");
     const textElement = document.getElementById("text");
-    const message = document.getElementById("message");
 
-    function showMessage(content) {
-      message.textContent = content;
-      message.classList.remove("hidden");
-      textElement.classList.add("hidden");
-      image.classList.add("hidden");
-    }
-
-    if (!imageUrl) {
-      showMessage('Falta el parámetro "image" en la URL.');
-    } else {
+    if (imageUrl) {
       image.src = imageUrl;
       image.alt = text || "";
+    }
 
-      image.addEventListener("error", () => {
-        showMessage("No se ha podido cargar la imagen indicada.");
-      });
+    image.addEventListener("error", () => {
+      showMessage("No se ha podido cargar la imagen indicada.");
+    });
 
-      textElement.textContent = text || "";
+    if (text) {
+      textElement.textContent = text;
       document.title = text ? text : "ShowMe";
     }
+
+
   </script>
 </body>
 </html>
