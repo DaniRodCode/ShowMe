@@ -3,8 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Muestra una imagen a pantalla completa con texto superpuesto.">
+  <meta
+    name="description"
+    content="ShowMe muestra una imagen a pantalla completa con un texto superpuesto."
+  >
   <title>ShowMe</title>
+
   <style>
     * {
       box-sizing: border-box;
@@ -13,15 +17,19 @@
     html,
     body {
       width: 100%;
-      height: 100%;
+      min-height: 100%;
       margin: 0;
     }
 
     body {
-      overflow: hidden;
       background: #000;
+      color: #fff;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
+
+    /* =========================
+       VISOR
+       ========================= */
 
     .viewer {
       position: relative;
@@ -31,6 +39,7 @@
       align-items: center;
       justify-content: center;
       background: #000;
+      overflow: hidden;
     }
 
     .viewer img {
@@ -52,7 +61,7 @@
       pointer-events: none;
     }
 
-    .text {
+    .viewer-text {
       position: absolute;
       z-index: 1;
       left: 5vw;
@@ -71,30 +80,414 @@
       white-space: pre-wrap;
       overflow-wrap: anywhere;
     }
+
+    /* =========================
+       PANTALLA DE INICIO
+       ========================= */
+
+    .home {
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background:
+        radial-gradient(circle at top, #1b1b1b 0, #0b0b0b 42%, #000 100%);
+    }
+
+    .card {
+      width: min(100%, 760px);
+      padding: clamp(28px, 5vw, 48px);
+      background: rgba(24, 24, 24, 0.94);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+    }
+
+    .title {
+      margin: 0 0 12px;
+      font-size: clamp(2.5rem, 9vw, 5rem);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+    }
+
+    .description {
+      margin: 0 0 32px;
+      color: #c8c8c8;
+      font-size: 1.05rem;
+      line-height: 1.6;
+    }
+
+    .field {
+      margin-bottom: 22px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+      font-weight: 650;
+    }
+
+    .field input {
+      width: 100%;
+      height: 50px;
+      padding: 0 14px;
+      border: 1px solid #444;
+      border-radius: 10px;
+      background: #101010;
+      color: #fff;
+      font: inherit;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .field input:focus {
+      border-color: #888;
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
+    }
+
+    .field input[readonly] {
+      color: #aaa;
+      cursor: default;
+    }
+
+    .result-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .result-row input {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .copy-button {
+      width: 50px;
+      height: 50px;
+      flex: 0 0 50px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      border: 1px solid #444;
+      border-radius: 10px;
+      background: #fff;
+      color: #111;
+      cursor: pointer;
+      transition: transform 0.1s ease, opacity 0.15s ease;
+    }
+
+    .copy-button:hover {
+      opacity: 0.9;
+    }
+
+    .copy-button:active {
+      transform: scale(0.96);
+    }
+
+    .copy-button:disabled {
+      opacity: 0.45;
+      cursor: default;
+      transform: none;
+    }
+
+    .copy-icon,
+    .check-icon {
+      width: 21px;
+      height: 21px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .hint {
+      margin: 9px 0 0;
+      color: #888;
+      font-size: 0.85rem;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .error {
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: #000;
+    }
+
+    .error-message {
+      max-width: 600px;
+      padding: 24px;
+      border: 1px solid #333;
+      border-radius: 14px;
+      background: #171717;
+      color: #fff;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 600px) {
+      .home {
+        padding: 14px;
+      }
+
+      .card {
+        border-radius: 16px;
+        padding: 24px 20px;
+      }
+
+      .result-row {
+        gap: 8px;
+      }
+    }
   </style>
 </head>
+
 <body>
-  <main class="viewer">
+  <main id="home" class="home hidden">
+    <section class="card">
+      <h1 class="title">ShowMe</h1>
+
+      <p class="description">
+        ShowMe muestra una imagen a pantalla completa y coloca sobre ella
+        el texto que indiques. Puedes generar una URL con los parámetros
+        <strong>image</strong> y <strong>text</strong> y compartirla
+        directamente.
+      </p>
+
+      <div class="field">
+        <label for="image-input">URL de la imagen</label>
+        <input
+          id="image-input"
+          type="url"
+          placeholder="https://ejemplo.com/imagen.jpg"
+          autocomplete="off"
+          spellcheck="false"
+        >
+      </div>
+
+      <div class="field">
+        <label for="text-input">Texto</label>
+        <input
+          id="text-input"
+          type="text"
+          placeholder="Escribe el texto que quieres mostrar"
+          autocomplete="off"
+        >
+      </div>
+
+      <div class="field">
+        <label for="result-input">URL resultante</label>
+
+        <div class="result-row">
+          <input
+            id="result-input"
+            type="text"
+            readonly
+            aria-label="URL resultante"
+          >
+
+          <button
+            id="copy-button"
+            class="copy-button"
+            type="button"
+            title="Copiar URL"
+            aria-label="Copiar URL"
+            disabled
+          >
+            <svg
+              class="copy-icon"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <rect x="9" y="9" width="11" height="11" rx="2"></rect>
+              <path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+        </div>
+
+        <p id="copy-hint" class="hint">
+          Introduce una imagen y un texto para generar la URL.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <main id="viewer" class="viewer hidden">
     <img id="image" alt="">
-    <p id="text" class="text"></p>
+    <p id="viewer-text" class="viewer-text"></p>
+  </main>
+
+  <main id="error" class="error hidden">
+    <div id="error-message" class="error-message"></div>
   </main>
 
   <script>
     const params = new URLSearchParams(window.location.search);
+
     const imageUrl = params.get("image");
     const text = params.get("text");
 
-    const image = document.getElementById("image");
-    const textElement = document.getElementById("text");
+    const home = document.getElementById("home");
+    const viewer = document.getElementById("viewer");
+    const error = document.getElementById("error");
+    const errorMessage = document.getElementById("error-message");
 
-    if (imageUrl) {
-      image.src = imageUrl;
-      image.alt = text || "";
+    const image = document.getElementById("image");
+    const viewerText = document.getElementById("viewer-text");
+
+    const imageInput = document.getElementById("image-input");
+    const textInput = document.getElementById("text-input");
+    const resultInput = document.getElementById("result-input");
+    const copyButton = document.getElementById("copy-button");
+    const copyHint = document.getElementById("copy-hint");
+
+    const baseUrl = window.location.href.split("?")[0];
+
+    function showHome() {
+      home.classList.remove("hidden");
+      viewer.classList.add("hidden");
+      error.classList.add("hidden");
+
+      imageInput.focus();
+      updateResultUrl();
     }
 
-    if (text) {
-      textElement.textContent = text;
-      document.title = text;
+    function showViewer() {
+      viewer.classList.remove("hidden");
+      home.classList.add("hidden");
+      error.classList.add("hidden");
+
+      image.src = imageUrl;
+      image.alt = text || "";
+      viewerText.textContent = text || "";
+      document.title = text || "ShowMe";
+
+      image.addEventListener("error", () => {
+        viewer.classList.add("hidden");
+        errorMessage.textContent =
+          "No se ha podido cargar la imagen indicada en el parámetro "image".";
+        error.classList.remove("hidden");
+      }, { once: true });
+    }
+
+    function showError(message) {
+      home.classList.add("hidden");
+      viewer.classList.add("hidden");
+      error.classList.remove("hidden");
+      errorMessage.textContent = message;
+    }
+
+    function buildResultUrl() {
+      const url = new URL(baseUrl);
+
+      const imageValue = imageInput.value.trim();
+      const textValue = textInput.value;
+
+      if (imageValue) {
+        url.searchParams.set("image", imageValue);
+      }
+
+      if (textValue) {
+        url.searchParams.set("text", textValue);
+      }
+
+      return url.toString();
+    }
+
+    function updateResultUrl() {
+      const imageValue = imageInput.value.trim();
+      const textValue = textInput.value;
+
+      if (!imageValue || !textValue) {
+        resultInput.value = baseUrl;
+        copyButton.disabled = true;
+        copyHint.textContent =
+          "Introduce una imagen y un texto para generar la URL.";
+        return;
+      }
+
+      resultInput.value = buildResultUrl();
+      copyButton.disabled = false;
+      copyHint.textContent =
+        "Esta URL abrirá directamente el visor con la imagen y el texto indicados.";
+    }
+
+    async function copyResultUrl() {
+      const value = resultInput.value;
+
+      if (!value || copyButton.disabled) {
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(value);
+      } catch {
+        const temporary = document.createElement("textarea");
+        temporary.value = value;
+        temporary.style.position = "fixed";
+        temporary.style.opacity = "0";
+        document.body.appendChild(temporary);
+        temporary.focus();
+        temporary.select();
+        document.execCommand("copy");
+        temporary.remove();
+      }
+
+      copyButton.innerHTML = `
+        <svg
+          class="check-icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path d="m5 12 4 4L19 6"></path>
+        </svg>
+      `;
+
+      copyButton.title = "URL copiada";
+      copyButton.setAttribute("aria-label", "URL copiada");
+
+      setTimeout(() => {
+        copyButton.innerHTML = `
+          <svg
+            class="copy-icon"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <rect x="9" y="9" width="11" height="11" rx="2"></rect>
+            <path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"></path>
+          </svg>
+        `;
+
+        copyButton.title = "Copiar URL";
+        copyButton.setAttribute("aria-label", "Copiar URL");
+      }, 1500);
+    }
+
+    imageInput.addEventListener("input", updateResultUrl);
+    textInput.addEventListener("input", updateResultUrl);
+    copyButton.addEventListener("click", copyResultUrl);
+
+    // Sin parámetros: mostrar la pantalla de inicio.
+    if (!imageUrl && !text) {
+      showHome();
+    }
+    // Con ambos parámetros: mostrar el visor.
+    else if (imageUrl && text) {
+      showViewer();
+    }
+    // Parámetros incompletos: indicar cómo usar la página.
+    else {
+      showError(
+        'Para usar ShowMe necesitas los dos parámetros: "image" y "text".'
+      );
     }
   </script>
 </body>
