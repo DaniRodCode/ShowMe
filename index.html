@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Muestra una imagen a pantalla completa con texto superpuesto.">
+  <title>ShowMe</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      overflow: hidden;
+      background: #000;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .viewer {
+      position: relative;
+      width: 100%;
+      height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .viewer img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .viewer::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.15),
+        rgba(0, 0, 0, 0.35)
+      );
+      pointer-events: none;
+    }
+
+    .text {
+      position: absolute;
+      z-index: 1;
+      left: 5vw;
+      right: 5vw;
+      top: 50%;
+      transform: translateY(-50%);
+      margin: 0;
+      color: #fff;
+      font-size: clamp(2rem, 6vw, 6rem);
+      font-weight: 700;
+      line-height: 1.1;
+      text-align: center;
+      text-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.9),
+        0 4px 24px rgba(0, 0, 0, 0.7);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .message {
+      position: absolute;
+      z-index: 2;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: min(90vw, 700px);
+      padding: 1.25rem 1.5rem;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 12px;
+      text-align: center;
+      font-size: 1.1rem;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <main class="viewer">
+    <img id="image" alt="">
+    <p id="text" class="text"></p>
+    <div id="message" class="message hidden"></div>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const imageUrl = params.get("image");
+    const text = params.get("text");
+
+    const image = document.getElementById("image");
+    const textElement = document.getElementById("text");
+    const message = document.getElementById("message");
+
+    function showMessage(content) {
+      message.textContent = content;
+      message.classList.remove("hidden");
+      textElement.classList.add("hidden");
+      image.classList.add("hidden");
+    }
+
+    if (!imageUrl) {
+      showMessage('Falta el parámetro "image" en la URL.');
+    } else {
+      image.src = imageUrl;
+      image.alt = text || "";
+
+      image.addEventListener("error", () => {
+        showMessage("No se ha podido cargar la imagen indicada.");
+      });
+
+      textElement.textContent = text || "";
+      document.title = text ? text : "ShowMe";
+    }
+  </script>
+</body>
+</html>
